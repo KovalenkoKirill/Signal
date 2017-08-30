@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace Signal
+namespace Signal.Serializers
 {
 	public class BinarySerializer<T> : ISerializer<T>
 	{

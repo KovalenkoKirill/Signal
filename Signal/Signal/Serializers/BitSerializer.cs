@@ -3,11 +3,11 @@ using System.Runtime.InteropServices;
 
 namespace Signal
 {
-	public class BitSerializer<T> : ISerializer<T> where T : struct
+	public class BitSerializer<T> : ISerializer<T>
 	{
 		public T Deserialize(byte[] buffer)
 		{
-			T str = new T();
+			T str = Activator.CreateInstance<T>();
 
 			int size = Marshal.SizeOf(str);
 			IntPtr ptr = Marshal.AllocHGlobal(size);

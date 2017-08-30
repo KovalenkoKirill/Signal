@@ -40,18 +40,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BinarySerializer.cs" />
-    <Compile Include="BitSerializer.cs" />
+    <Compile Include="Serializers\BinarySerializer.cs" />
+    <Compile Include="Serializers\BitSerializer.cs" />
     <Compile Include="CrossProcessSignal.cs" />
     <Compile Include="interface\IBuffer.cs" />
     <Compile Include="interface\ISerializer.cs" />
     <Compile Include="interface\ISignal.cs" />
     <Compile Include="interface\ISignalFactory.cs" />
+    <Compile Include="Serializers\ComplexSerializer.cs" />
+    <Compile Include="Serializers\StringSerializer.cs" />
     <Compile Include="SharedBuffer.cs" />
     <Compile Include="Signal.cs" />
     <Compile Include="SignalFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

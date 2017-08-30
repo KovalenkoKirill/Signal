@@ -16,6 +16,20 @@ namespace UnitTest
 		}
 
 		[TestMethod]
+		public void ExampleTest()
+		{
+			var signal = SignalFactory.GetInstanse<string>();
+			var task1 = Task.Factory.StartNew(() => // старт потока
+			{
+				Thread.Sleep(1000);
+				signal.Send("Some message");
+			});
+			// блокировка текущего потока
+			string message = signal.Receive();
+			Debug.WriteLine(message);
+		}
+
+		[TestMethod]
 		public void PingPongCrossProcessMutexTest()
 		{
 			SendTest("Test");

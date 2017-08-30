@@ -1,4 +1,5 @@
-﻿using System.IO.MemoryMappedFiles;
+﻿using Signal.Serializers;
+using System.IO.MemoryMappedFiles;
 
 namespace Signal
 {
@@ -11,7 +12,7 @@ namespace Signal
 		public SharedBuffer(string bufferName)
 		{
 			this.bufferName = $"Signal/{bufferName}";
-			serializer = new BinarySerializer<T>();
+			serializer = new ComplexSerializer<T>();
 		}
 
 		public T GetBuffer()
