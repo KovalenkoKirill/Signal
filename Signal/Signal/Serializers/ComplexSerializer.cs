@@ -9,17 +9,18 @@ namespace Signal.Serializers
 {
 	public class ComplexSerializer<T> : ISerializer<T>
 	{
-		ISerializer<T> serializer;
-		ISerializer<string> stringSerializer;
-		public ComplexSerializer()
+		static ISerializer<T> serializer;
+		static ISerializer<string> stringSerializer;
+
+		static ComplexSerializer()
 		{
-			if(typeof(T) == typeof(string))
+			if (typeof(T) == typeof(string))
 			{
 				stringSerializer = new StringSerializer<string>();
 			}
-			else if(typeof(T).IsValueType)
+			else if (typeof(T).IsValueType)
 			{
-				if(FindReferenceType(typeof(T)))
+				if (FindReferenceType(typeof(T)))
 				{
 					serializer = new BinarySerializer<T>();
 				}
@@ -34,7 +35,7 @@ namespace Signal.Serializers
 			}
 		}
 
-		private bool FindReferenceType(Type type)
+		private static bool FindReferenceType(Type type)
 		{
 			var members = type.GetMembers();
 			foreach (var member in members)

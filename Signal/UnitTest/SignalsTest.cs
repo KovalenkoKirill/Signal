@@ -16,6 +16,31 @@ namespace UnitTest
 		}
 
 		[TestMethod]
+		public void PingPong()
+		{
+			var signal = SignalFactory.GetInstanse<string>();
+			var task = Task.Factory.StartNew(() => { 
+				for(int i = 0;i<10;i++)
+				{
+					Debug.WriteLine(signal.Receive());
+					Thread.Sleep(30);
+					signal.Send("pong");
+				}
+			});
+			Task.Factory.StartNew(() => {
+				Thread.Sleep(10);
+				for (int i = 0; i < 10; i++)
+				{
+					signal.Send("ping");
+					Debug.WriteLine(signal.Receive());
+					Thread.Sleep(30);
+				}
+			});
+
+			task.Wait();
+		}
+
+		[TestMethod]
 		public void ExampleTest()
 		{
 			var signal = SignalFactory.GetInstanse<string>();
