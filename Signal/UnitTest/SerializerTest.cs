@@ -79,6 +79,8 @@ namespace UnitTest
 
 			private TestStruct str;
 
+			private ArrayItem[] arrayClass;
+
 			public ClassForTest()
 			{
 				_Array = new int[]
@@ -92,7 +94,21 @@ namespace UnitTest
 					G = 10,
 					R = 10
 				};
+				arrayClass = new[]
+				{
+					new ArrayItem(),
+					new ArrayItem(),
+					new ArrayItem()
+				};
 			}
+		}
+
+		[Serializable]
+		public class ArrayItem
+		{
+			public int abc = 99;
+
+			public int dfg = 50;
 		}
 
 		[TestMethod]

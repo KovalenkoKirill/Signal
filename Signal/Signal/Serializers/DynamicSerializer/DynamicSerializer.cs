@@ -27,6 +27,8 @@ namespace Signal.Serializers.DynamicSerializer
 
 		private static byte[] nullPtrBytres = BitConverter.GetBytes(((short)-1));
 
+		private static int PtrSize = sizeof(short);
+
 		private Func<object, byte[]> _Serialize;
 
 		private List<MemberInfo> _memberInfo;
@@ -41,7 +43,7 @@ namespace Signal.Serializers.DynamicSerializer
 		{
 			get
 			{
-				if(_isHasReference ==null)
+				if (_isHasReference == null)
 				{
 					_isHasReference = FindReferenceType();
 				}
@@ -58,14 +60,7 @@ namespace Signal.Serializers.DynamicSerializer
 
 		public byte[] Serialize(object entity)
 		{
-			if (_Serialize != null)
-			{
-				return _Serialize(entity);
-			}
-			else
-			{
-				return ReferenceTypeSerialize(entity);
-			}
+			return _Serialize(entity);
 		}
 
 		#endregion serialize/Desirialize method
@@ -107,11 +102,15 @@ namespace Signal.Serializers.DynamicSerializer
 
 		private int GetSize()
 		{
-			if(_type.IsPrimitive)
+			int size = 0;
+			if (_type.IsPrimitive)
 			{
 				return _type.SizeOfPrimitive();
 			}
-			int size = 0;
+			else if (_type.IsArray)
+			{
+				return PtrSize;
+			}
 			foreach (var innerMember in _memberInfo)
 			{
 				var innerMemberType = GetMemberType(innerMember);
@@ -123,7 +122,7 @@ namespace Signal.Serializers.DynamicSerializer
 				{
 					if (DynamicSerializer.Instance(innerMemberType).isHasReference)
 					{
-						size += sizeof(short);
+						size += PtrSize;
 					}
 					else
 					{
@@ -132,7 +131,7 @@ namespace Signal.Serializers.DynamicSerializer
 				}
 				else
 				{
-					size += sizeof(short);
+					size += PtrSize;
 				}
 			}
 			return size;
@@ -144,7 +143,7 @@ namespace Signal.Serializers.DynamicSerializer
 
 		private bool FindReferenceType()
 		{
-			var members =  _memberInfo;
+			var members = _memberInfo;
 			foreach (var member in members)
 			{
 				Type memberType = GetMemberType(member);
@@ -201,15 +200,82 @@ namespace Signal.Serializers.DynamicSerializer
 
 		#endregion Reflection Helpers
 
+		private BufferPtr ArraySerialize(object entity, DynamicBuffer buffer, Dictionary<object, BufferPtr> referenceMaping)
+		{
+			int size = sizeof(int);
+			Array array = (Array)entity;
+			Type memberType = _type.GetElementType();
+			var serializer = Instance(memberType);
+			if (memberType.IsValueType)
+			{
+				size += serializer._size * array.Length;
+			}
+			else
+			{
+				size += PtrSize * array.Length;
+			}
+			byte[] current = new byte[size];
+			int currentPadding = 0;
+			var ptr = buffer.Alloc(size);
+			byte[] lenghtBytes = BitConverter.GetBytes(array.Length);
+			Array.Copy(lenghtBytes, current, lenghtBytes.Length);
+			currentPadding += lenghtBytes.Length;
+			for(int i = 0;i<array.Length;i++)
+			{
+				object value = array.GetValue(i);
+				if (value == null) //null ptr
+				{
+					Array.Copy(nullPtrBytres, 0, current, currentPadding, nullPtrBytres.Length);
+					currentPadding += nullPtrBytres.Length;
+				}
+				else if (referenceMaping.ContainsKey(value))
+				{
+					var objectptr = referenceMaping[value];
+					var memberBytes = BitConverter.GetBytes(objectptr.position);
+					Array.Copy(memberBytes, 0, current, currentPadding, memberBytes.Length);
+					currentPadding += memberBytes.Length;
+					continue;
+				}
+				if (memberType.IsValueType &&
+				(memberType.IsPrimitive || !Instance(memberType).isHasReference))
+				{
+					BitSerializer BitSerializer = BitSerializer.GetInstanse(memberType);
+					var memberBytes = BitSerializer.Serialize(value);
+					Array.Copy(memberBytes, 0, current, currentPadding, memberBytes.Length);
+					currentPadding += memberBytes.Length;
+					continue;
+				}
+				else
+				{
+					var objectptr = Instance(memberType).ReferenceSerizlize(value, buffer, referenceMaping);
+					var memberBytes = BitConverter.GetBytes(objectptr.position);
+					Array.Copy(memberBytes, 0, current, currentPadding, memberBytes.Length);
+					currentPadding += memberBytes.Length;
+					continue;
+				}
+			}
+			ptr.Set(current);
+			return ptr;
+		}
+
+		//Serializetion For Reference type
 		private BufferPtr ReferenceSerizlize(object Entity, DynamicBuffer buffer, Dictionary<object, BufferPtr> referenceMaping)
 		{
+			if (!_type.IsValueType)
+			{
+				if (referenceMaping.ContainsKey(Entity))
+				{
+					return referenceMaping[Entity];
+				}
+			}
+			if (_type.IsArray)
+			{
+				return ArraySerialize(Entity, buffer, referenceMaping);
+			}
 			int size = _size;
 			byte[] current = new byte[size];
 			var ptr = buffer.Alloc(size);
-			if (!_type.IsValueType)
-			{
-				referenceMaping.Add(Entity, ptr);
-			}
+			referenceMaping.Add(Entity, ptr);
 			int currentPadding = 0;
 			foreach (var member in _memberInfo)
 			{
@@ -229,10 +295,10 @@ namespace Signal.Serializers.DynamicSerializer
 					continue;
 				}
 				if (memberType.IsValueType &&
-				(memberType.IsPrimitive ||  !Instance(memberType).isHasReference))
+				(memberType.IsPrimitive || !Instance(memberType).isHasReference))
 				{
 					BitSerializer BitSerializer = BitSerializer.GetInstanse(memberType);
-					var memberBytes = BitSerializer.Serialize(GetValue(Entity, member));
+					var memberBytes = BitSerializer.Serialize(value);
 					Array.Copy(memberBytes, 0, current, currentPadding, memberBytes.Length);
 					currentPadding += memberBytes.Length;
 					continue;
