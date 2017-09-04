@@ -1,6 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Signal;
 using Signal.Serializers;
+using Signal.Serializers.DynamicSerializer;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,7 +14,7 @@ namespace UnitTest
 	[TestClass]
 	public class SerializerTest
 	{
-		const int iterationCount = 10000;
+		const int iterationCount = 1000000;
 		
 		[TestMethod]
 		public void PerformanceTest()
@@ -25,7 +26,7 @@ namespace UnitTest
 
 			watch.Start();
 
-			for(int i = 0;i<1000;i++)
+			for(int i = 0;i< iterationCount; i++)
 			{
 				byte[] resultBytes = binarySerializer.Serialize(i);
 				int result = binarySerializer.Deserialize(resultBytes);
@@ -35,13 +36,63 @@ namespace UnitTest
 			Debug.WriteLine($"binarySerializer result {watch.ElapsedMilliseconds} ms.");
 			watch.Reset();
 			watch.Start();
-			for (int i = 0; i < 1000; i++)
+			for (int i = 0; i < iterationCount; i++)
 			{
 				byte[] resultBytes = bitSerializer.Serialize(i);
 				int result = bitSerializer.Deserialize(resultBytes);
 			}
 			watch.Stop();
 			Debug.WriteLine($"bitSerializer result {watch.ElapsedMilliseconds} ms.");
+		}
+
+		[TestMethod]
+		public void DynamicSerializerTest()
+		{
+			var dynamicSerializer = new DynamicSerializer<ClassForTest>();
+			var testEntity = new ClassForTest();
+			var watch = Stopwatch.StartNew();
+			for (int i = 0; i < iterationCount; i++)
+			{
+				var buffer = dynamicSerializer.Serialize(testEntity);
+			}
+			watch.Stop();
+			Debug.WriteLine($"DynamicSerialize result {watch.ElapsedMilliseconds} ms.");
+
+			var binary = new BinarySerializer<ClassForTest>();
+			watch = Stopwatch.StartNew();
+			for (int i = 0; i < iterationCount; i++)
+			{
+				var buffer = binary.Serialize(testEntity);
+			}
+			watch.Stop();
+			Debug.WriteLine($"BinarySerializer result {watch.ElapsedMilliseconds} ms.");
+		}
+
+		[Serializable]
+		public class ClassForTest
+		{
+			int i = 0;
+			public int z = 50;
+			public int azaza { get; set; }
+
+			public int[] _Array;
+
+			private TestStruct str;
+
+			public ClassForTest()
+			{
+				_Array = new int[]
+				{
+					10,0,9,1
+				};
+
+				str = new TestStruct()
+				{
+					B = 10,
+					G = 10,
+					R = 10
+				};
+			}
 		}
 
 		[TestMethod]
@@ -153,7 +204,7 @@ namespace UnitTest
 			public List<int> List { get; set; }
 		}
 
-
+		[Serializable]
 		struct TestStruct
 		{
 			public int R { get; set; }

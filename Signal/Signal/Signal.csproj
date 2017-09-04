@@ -48,6 +48,10 @@
     <Compile Include="interface\ISignal.cs" />
     <Compile Include="interface\ISignalFactory.cs" />
     <Compile Include="Serializers\ComplexSerializer.cs" />
+    <Compile Include="Serializers\Extentions\BaseTypeSizeHelper.cs" />
+    <Compile Include="Serializers\DynamicSerializer\DynamicBuffer.cs" />
+    <Compile Include="Serializers\DynamicSerializer\DynamicSerializer.cs" />
+    <Compile Include="Serializers\DynamicSerializer\TemplateWrapper\DynamicSerializer.cs" />
     <Compile Include="Serializers\StringSerializer.cs" />
     <Compile Include="SharedBuffer.cs" />
     <Compile Include="Signal.cs" />
